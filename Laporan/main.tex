@@ -1,0 +1,167 @@
+\documentclass[12pt,a4paper]{article}
+
+% Encoding & language
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[main=english, indonesian]{babel}
+\usepackage{caption}
+\usepackage{booktabs}
+
+% untuk kode
+\usepackage{listings}
+
+% Margin & spacing
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{setspace}
+\setstretch{1.2}
+
+% Math & extras
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\theoremstyle{remark}
+\newtheorem*{solusi}{Solusi}
+
+% Paket untuk gambar
+\usepackage{graphicx}
+
+% Etc
+\usepackage{titling}
+\usepackage{csquotes}
+% Untuk hyperlink
+\usepackage{hyperref}
+
+% --- Biblatex dengan IEEE style ---
+\usepackage[backend=biber,style=ieee,language=english]{biblatex}
+\addbibresource{refs.bib}
+
+\DefineBibliographyStrings{english}{%
+  references   = {Daftar Pustaka},
+  bibliography = {Daftar Pustaka},
+  and          = {dan},
+  andothers    = {dkk.},
+  pages        = {hlm.},
+}
+
+% STYLING
+\setlength{\parindent}{2em}
+
+% OVERRIDE Caption
+\captionsetup[figure]{labelfont=bf, name=Gambar, justification=centering}
+\captionsetup[table]{labelfont=bf, name=Tabel, justification=centering}
+
+
+
+% --- Title page ---
+\title{%
+  \textbf{Tugas Mata Kuliah} \\
+  \large Rekayasa Fitur dan Pengenalan Pola (RPP) \\
+  \large Pembuatan Model Pengenalan Perintah Sederhana}
+  
+\author{Khalilullah Al Faath \\ NIU: 566643 \\ Magister Ilmu Komputer \\ [1cm]
+  \includegraphics[width=0.4\textwidth]{images/logo-ugm.png}}
+\date{Universitas Gadjah Mada \\ Semester Gasal 2025/2026}
+
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\LARGE \@title \par}
+    \vspace{2cm}
+    
+    {\large \@author \par}
+    
+    \vfill
+    
+    {\large \@date \par}
+  \end{titlepage}
+}
+\makeatother
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+% Daftar isi dan daftar gambar/tabel
+
+% override label
+\renewcommand{\contentsname}{Daftar isi}
+
+
+
+\renewcommand{\listfigurename}{Daftar Gambar}
+
+
+
+\renewcommand{\listtablename}{Daftar Tabel}
+
+% daftar isi
+\tableofcontents
+
+\newpage
+
+% daftar gambar
+\listoffigures
+
+\newpage
+
+% daftar tabel
+\listoftables
+
+\newpage
+\setcounter{page}{1}
+
+\section{Pendahuluan}
+
+\section{Metode}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=1\linewidth]{images/diagram alir.pdf}
+%     \caption{Diagram alir metode yang diusulkan.}
+%     \label{fig:diagramalir}
+% \end{figure}
+
+
+% \begin{table}[H]
+%     \centering
+%     \begin{tabular}{c|c|c}
+%         No. & Kelas & Jumlah data \\
+%         1 & Maju & 22 \\
+%         2 & Mundur & 26 \\
+%         3 & Berhenti & 23 \\
+%         4 & Kiri & 25 \\
+%         5 & Kanan & 26 \\
+%     \end{tabular}
+%     \caption{Banyaknya data tiap kelas.}
+%     \label{tab:rincianjumlahdata}
+% \end{table}
+
+\section{Hasil dan Pembahasan}
+
+\subsection{Dataset yang digunakan}
+
+\subsection{Lingkungan pengujian}
+
+\subsection{Hasil}
+
+\subsection{Diskusi}
+
+\section{Kesimpulan}
+
+Berdasarkan hasil dan analisis yang telah dilakukan, dapat disimpulkan bahwa:
+
+Kode tersedia pada \textit{repository} GitHub \url{https://github.com/khalilullahalfaath/Automatic-Speech-Recognition}.
+
+\newpage
+
+% Daftar pustaka
+\printbibliography
+
+\end{document}
