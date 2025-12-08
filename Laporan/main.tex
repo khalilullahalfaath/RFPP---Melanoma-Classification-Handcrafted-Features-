@@ -3,7 +3,7 @@
 % Encoding & language
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[main=english, indonesian]{babel}
+\usepackage[main=english]{babel}
 \usepackage{caption}
 \usepackage{booktabs}
 
@@ -59,7 +59,7 @@
 \title{%
   \textbf{Tugas Mata Kuliah} \\
   \large Rekayasa Fitur dan Pengenalan Pola (RFPP) \\
-  \large Klasifikasi Melanoma dengan Pendekatan \textit{Hand-crafted Features} dan Pemelajaran Mesin}
+  \large Klasifikasi Melanoma dengan Pendekatan \textit{Hand-crafted Features} \\ dan Pemelajaran Mesin}
   
 \author{Khalilullah Al Faath \\ NIU: 566643 \\ Magister Ilmu Komputer \\ [1cm]
   \includegraphics[width=0.4\textwidth]{images/logo-ugm.png}}
@@ -91,14 +91,8 @@
 % Daftar isi dan daftar gambar/tabel
 
 % override label
-\renewcommand{\contentsname}{Daftar isi}
-
-
-
+\renewcommand{\contentsname}{Daftar Isi}
 \renewcommand{\listfigurename}{Daftar Gambar}
-
-
-
 \renewcommand{\listtablename}{Daftar Tabel}
 
 % daftar isi
@@ -118,6 +112,25 @@
 \setcounter{page}{1}
 
 \section{Pendahuluan}
+Melanoma maligna merupakan bentuk neoplasma kulit yang paling mematikan yang merupakan hasil transformasi melanosit, yaitu sel yang berasal dari \textit{neural crest}. Karena asal-usul embriologisnya, melanoma tidak hanya terbatas pada kulit, tetapi juga dapat berkembang di lokasi lain tempat sel \textit{neural crest} bermigrasi, seperti traktus gastrointestinal, otak, dan mata (melanoma okular). Secara patofisiologis, perkembangan melanoma sangat dipengaruhi oleh faktor lingkungan (terutama paparan radiasi UV), genetik (seperti mutasi pada gen BRAF, CDKN2A, CDK4), dan imunologis \cite{heistein_malignant_2025}.
+
+Urgensi pengembangan sistem deteksi dan klasifikasi melanoma didasari oleh tren peningkatan insiden dan risiko fatalitas yang yang tinggi. Berdasarkan data \textit{National Cancer Instite (NCI) Surveillance, Epidemiology, and End Results (SEER)}, (1) melanoma kini  merupakan kanker ganas yang paling umum yang terjadi di pria dan wanita, (2) pada tahun 2023, diperkirakan terdapat 97.000 kasus baru di Amerika Serikat dengan estimasi 7.990 kematian \cite{siegel_cancer_2023}, (3) Tingkat kelangsungan hidup relatif 5 tahun (5-year relative survival rate) sangat bergantung pada stadium saat diagnosis: pasien dengan melanoma stadium 0 (in-situ) memiliki tingkat kelangsungan hidup mencapai 97\% hingga 100\%. Sebaliknya, angka ini menurun drastis menjadi sekitar 30\% hingga 52\% bagi pasien yang terdiagnosis pada stadium IV (metastatik) \cite{heistein_malignant_2025}, (4) di Indonesia, pada tahun 2020, angka kasus kanker kulit mencapai 18.000 kasus dengan angka kematian sekitar 3.000 \cite{primaya_hospital_editor_kanker_2023}.
+
+Deteksi dini melanoma dapat dilakukan dengan menggunakan metode jembatan keledai "ABCDE", yaitu "A" untuk \textit{Asymmetry} atau asimetris, "B" untuk \textit{Border} atau tepi, "C" untuk \textit{color} atau warna, "D" untuk \textit{Diameter}, dan "E" untuk \textit{Evolving} atau berevolusi \cite{heistein_malignant_2025}. Gambar~\ref{fig:abcde} menggambarkan karakteristik khusus dari melanoma.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\linewidth]{images/abcde-melanoma.png}
+  \caption{Karakteristik Melanoma}
+  \label{fig:abcde}
+\end{figure}
+
+Pengembangan sistem \textit{Computer-Aided Diagnosis (CAD)} untuk deteksi melanoma telah menjadi fokus penelitian intensif dalam beberapa dekade terakhir. Secara garis besar, penelitian-penelitian sebelumnya dapat dikelompokkan menjadi dua pendekatan utama: metode berbasis ekstraksi fitur manual atau (\textit{hand-crafted features}) dan metode berbasis pemelajaran dalam atau \textit{Deep Learning}.
+
+\begin{description}
+  \item[Pendekatan ekstraksi manual] Pendekatan pertama, yaitu metode ekstraksi fitur manual, berfokus pada pemodelan karakteristik visual melanoma berdasarkan pengetahuan klinis dan aturan morfologi. Pada pendekatan ini, proses analisis citra dilakukan melalui tahapan pra-pemrosesan, segmentasi lesi, dan ekstraksi fitur berbasis ciri geometris, tekstur, atau warna. Contohnya termasuk penggunaan fitur statistik orde pertama, \textit{Histogram of Oriented Gradients (HOG)}, \textit{Local Binary Patterns (LBP)}, momen bentuk, hingga parameter geometrik seperti asimetri, \textit{compactness}, dan \textit{eccentricity}. Pendekatan ini memiliki keunggulan berupa interpretabilitas yang tinggi karena parameter yang dianalisis selaras dengan kriteria klinis seperti aturan ABCDE. Namun, performanya sangat bergantung pada kualitas segmentasi dan sensitivitas model terhadap variasi perangkat fotografi, pencahayaan, serta keberadaan artefak seperti rambut, bayangan, dan variasi kulit \cite{tumpa_artificial_2021, mahum_skin_2022, almaraz-damian_melanoma_2020}.
+  \item[Pendekatan pemelajaran dalam] Sebaliknya, pendekatan berbasis pemelajaran dalam (\textit{Deep Learning}) memanfaatkan jaringan saraf tiruan berlapis banyak, khususnya \textit{Convolutional Neural Network} (CNN), untuk mengekstraksi representasi fitur secara otomatis tanpa memerlukan desain fitur manual oleh pakar. Model seperti ResNet, EfficientNet, dan Vision Transformer (ViT) telah menunjukkan performa unggul dalam kompetisi internasional seperti International Skin Imaging Collaboration (ISIC). Keunggulan utama pendekatan ini adalah kemampuannya untuk belajar dari data berskala besar, mengurangi ketergantungan pada pra-pemrosesan, serta meningkatkan robustnes terhadap variasi pola, warna, dan tekstur lesi kulit. Namun, tantangannya mencakup kebutuhan dataset besar yang teranotasi dengan baik, risiko bias algoritmik akibat ketidakseimbangan distribusi data (misalnya warna kulit pasien), serta keterbatasan interpretabilitas (\textit{black-box problem}) \cite{esteva_dermatologist-level_2017,li_skin_2017, wu_skin_2022}.
+\end{description}
 
 \section{Metode}
 
@@ -157,7 +170,7 @@
 
 Berdasarkan hasil dan analisis yang telah dilakukan, dapat disimpulkan bahwa:
 
-Kode tersedia pada \textit{repository} GitHub \url{https://github.com/khalilullahalfaath/Automatic-Speech-Recognition}.
+Kode tersedia pada \textit{repository} GitHub \url{https://github.com/khalilullahalfaath/RFPP---Melanoma-Classification-Handcrafted-Features-}.
 
 \newpage
 
