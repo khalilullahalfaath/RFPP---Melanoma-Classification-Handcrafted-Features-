@@ -333,6 +333,176 @@ Gambar~\ref{fig:hasil-preprocessing} memperlihatkan contoh hasil tiap tahap filt
   \label{fig:hasil-preprocessing}
 \end{figure}
 
+\subsection{Segmentasi}
+Setelah pra-pemrosesan, didapatkan citra hasil filtering yang siap untuk disegmentasi. Gambar~\ref{fig:segmentasi} menunjukkan tahapn segmentasi yang dilakukan.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=15mm,
+      proc/.style={
+          rectangle,
+          draw,
+          rounded corners,
+          align=center,
+          minimum width=30mm,
+          minimum height=10mm,
+          text width=35mm,
+          fill=blue!20
+        },
+      io/.style={
+          trapezium,
+          trapezium left angle=75,
+          trapezium right angle=105,
+          draw,
+          align=center,
+          minimum width=25mm,
+          minimum height=8mm,
+          fill=orange!25
+        },
+      term-start/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=green!25
+        },
+      term-finish/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=red!25
+        },
+      arrow/.style={
+          -latex,
+          thick
+        }
+    ]
+
+    % Nodes
+    \node[term-start] (mulai) {Mulai};
+    \node[proc, right=of mulai] (otsu) {Thresholding dengan Otsu};
+    \node[proc, right=of otsu] (check) {Cek Intensitas Pusat dan Invert Mask jika perlu};
+    \node[proc, below=of check] (keep) {Memilih Objek Terbesar di Pusat};
+    \node[io, left=of keep] (save) {Mask Akhir};
+    \node[term-finish, left=of save] (selesai) {Selesai};
+
+    % Arrows
+    \draw[arrow] (mulai) -- (otsu);
+    \draw[arrow] (otsu) -- (check);
+    \draw[arrow] (check) -- (keep);
+    \draw[arrow] (keep) -- (save);
+    \draw[arrow] (save) -- (selesai);
+
+  \end{tikzpicture}
+
+
+
+  \caption{Diagram alir segmentasi.}
+  \label{fig:segmentasi}
+\end{figure}
+
+\subsubsection{\textit{Thresholding} dengan Otsu}
+Citra hasil pra-pemrosesan difilter menggunakan metode threshold otomatis Otsu (\textit{Otsu's method}) untuk menghasilkan \textit{binary mask} awal (\textit{mask\_raw}). \textit{Threshold} Otsu secara adaptif menentukan nilai ambang yang memisahkan piksel gelap (lesi) dan terang (kulit) berdasarkan histogram intensitas, sehingga tidak perlu menentukan \textit{threshold} secara manual.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=15mm,
+      proc/.style={
+          rectangle,
+          draw,
+          rounded corners,
+          align=center,
+          minimum width=30mm,
+          minimum height=10mm,
+          text width=35mm,
+          fill=blue!20
+        },
+      io/.style={
+          trapezium,
+          trapezium left angle=75,
+          trapezium right angle=105,
+          draw,
+          align=center,
+          minimum width=25mm,
+          minimum height=8mm,
+          fill=orange!25
+        },
+      term-start/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=green!25
+        },
+      term-finish/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=red!25
+        },
+      arrow/.style={
+          -latex,
+          thick
+        }
+    ]
+
+    % Nodes
+    \node[term-start] (start) {Mulai};
+    \node[proc, right=of start] (hist) {Hitung Histogram Intensitas};
+    \node[proc, right=of hist] (threshold) {Tentukan Threshold Otsu};
+    \node[proc, below=of threshold] (mask) {Buat Binary Mask Awal (mask\_raw)};
+    \node[term-finish, left=of mask] (end) {Selesai};
+
+    % Arrows
+    \draw[arrow] (start) -- (hist);
+    \draw[arrow] (hist) -- (threshold);
+    \draw[arrow] (threshold) -- (mask);
+    \draw[arrow] (mask) -- (end);
+  \end{tikzpicture}
+
+
+
+  \caption{Diagram alir Otsu.}
+  \label{fig:otsu}
+\end{figure}
+
+\subsubsection{Cek Intensitas Pusat dan Inversi Masker}
+Untuk memastikan lesi berada di area foreground (nilai putih pada mask), intensitas piksel di pusat citra dicek. Jika rata-rata intensitas pusat kurang dari 127, maka \textit{mask} dibalik (\texttt{cv2.bitwise\_not}) sehingga objek lesi menjadi foreground. Langkah ini mencegah kesalahan orientasi mask yang bisa memengaruhi tahap berikutnya.
+
+\subsubsection{Memilih Objek Terbesar di Pusat}
+Setelah inversi, semua objek pada mask diperiksa. Fungsi \texttt{keep\_center\_object\_only} digunakan untuk memilih objek terbesar yang berada di sekitar pusat citra, sementara objek kecil atau noise di pinggiran diabaikan. Hal ini memastikan hanya lesi utama yang akan dianalisis.
+
+\subsubsection{Simpan Mask Akhir}
+Mask akhir (\texttt{final\_mask}) yang sudah dibersihkan dan hanya menyisakan lesi utama kemudian disimpan sebagai file gambar. Selain itu, luas area objek utama dicatat (\texttt{contour\_area}) sebagai informasi tambahan untuk analisis selanjutnya.
+
+Gambar~\ref{fig:segmentasi-subfigure} menunjukkan hasil dari tahap segmentasi yang dilakukan.
+
+\begin{figure}[H]
+  \centering
+
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[trim=0 5cm 0 3cm, clip, width=\textwidth]{images/segmentasi-berhasil.pdf}
+    \caption{Segmentasi berhasil.}
+    \label{fig:segmentasi-berhasil}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[trim=0 5cm 0 3cm, clip, width=\textwidth]{images/segmentasi-gagal.pdf}
+    \caption{Segmentasi gagal.}
+    \label{fig:segmentasi-gagal}
+  \end{subfigure}
+
+  \caption{Contoh hasil segmentasi citra dermoskopik: (a) berhasil, (b) gagal.}
+  \label{fig:segmentasi-subfigure}
+\end{figure}
+
+
 
 % \begin{figure}[H]
 %     \centering
