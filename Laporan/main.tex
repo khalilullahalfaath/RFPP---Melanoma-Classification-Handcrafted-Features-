@@ -27,10 +27,13 @@
 
 % Paket untuk gambar
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
 
 % Etc
 \usepackage{titling}
 \usepackage{csquotes}
+\usepackage{subcaption}
 % Untuk hyperlink
 \usepackage{hyperref}
 
@@ -132,7 +135,204 @@ Pengembangan sistem \textit{Computer-Aided Diagnosis (CAD)} untuk deteksi melano
   \item[Pendekatan pemelajaran dalam] Sebaliknya, pendekatan berbasis pemelajaran dalam (\textit{Deep Learning}) memanfaatkan jaringan saraf tiruan berlapis banyak, khususnya \textit{Convolutional Neural Network} (CNN), untuk mengekstraksi representasi fitur secara otomatis tanpa memerlukan desain fitur manual oleh pakar. Model seperti ResNet, EfficientNet, dan Vision Transformer (ViT) telah menunjukkan performa unggul dalam kompetisi internasional seperti International Skin Imaging Collaboration (ISIC). Keunggulan utama pendekatan ini adalah kemampuannya untuk belajar dari data berskala besar, mengurangi ketergantungan pada pra-pemrosesan, serta meningkatkan robustnes terhadap variasi pola, warna, dan tekstur lesi kulit. Namun, tantangannya mencakup kebutuhan dataset besar yang teranotasi dengan baik, risiko bias algoritmik akibat ketidakseimbangan distribusi data (misalnya warna kulit pasien), serta keterbatasan interpretabilitas (\textit{black-box problem}) \cite{esteva_dermatologist-level_2017,li_skin_2017, wu_skin_2022}.
 \end{description}
 
+Klasifikasi melanoma yang dilakukan pada tugas ini dilakukan dengan menggunakan ekstraksi fitur manual dengan model pemelajaran mesin \textit{Support Vector Machine} (SVM).
+
 \section{Metode}
+Bagian ini menjelaskan alur langkah yang dilakukan pada tugas ini. Gambar~\ref{fig:diagramalir} menunjukkan alur langkah metode yang diusulkan.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=15mm,
+      proc/.style={
+          rectangle,
+          draw,
+          rounded corners,
+          align=center,
+          minimum width=30mm,
+          minimum height=10mm,
+          fill=blue!20
+        },
+      io/.style={
+          trapezium,
+          trapezium left angle=75,
+          trapezium right angle=105,
+          draw,
+          align=center,
+          minimum width=25mm,
+          minimum height=8mm,
+          fill=orange!25
+        },
+      term-start/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=green!25
+        },
+      term-finish/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=red!25
+        },
+      arrow/.style={
+          -latex,
+          thick
+        }
+    ]
+
+    % Nodes
+    \node[term-start] (mulai) {Mulai};
+    \node[proc, right=of mulai] (akuisisi) {Akuisisi};
+    \node[io, right=of akuisisi] (isic) {Dataset ISIC 2016 Task 3};
+    \node[proc, below=of isic] (pre) {Preprocessing};
+    \node[proc, left=of pre] (seg) {Segmentasi};
+    \node[io, left=of seg] (mask) {Mask Hasil Segmentasi};
+    \node[proc, below=of mask] (ekstrak) {Ekstraksi Fitur};
+    \node[proc, right=of ekstrak] (seleksi) {Seleksi Fitur};
+    \node[proc, right=of seleksi] (klasif) {Klasifikasi};
+    \node[term-finish, right=of klasif] (selesai) {Selesai};
+
+    % Arrows
+    \draw[arrow] (mulai) -- (akuisisi);
+    \draw[arrow] (akuisisi) -- (isic);
+    \draw[arrow] (isic) -- (pre);
+    \draw[arrow] (pre) -- (seg);
+    \draw[arrow] (seg) -- (mask);
+    \draw[arrow] (mask) -- (ekstrak);
+    \draw[arrow] (ekstrak) -- (seleksi);
+    \draw[arrow] (seleksi) -- (klasif);
+    \draw[arrow] (klasif) -- (selesai);
+
+  \end{tikzpicture}
+  \caption{Diagram alir metode yang dilakukan}
+  \label{fig:diagramalir}
+\end{figure}
+
+
+
+
+
+\subsection{Akuisisi}
+Dataset yang digunakan pada tugas ini adalah Dataset ISIC 2016 Task 3. \footnote{Dataset ini dapat diunduh di pranala berikut \url{https://challenge.isic-archive.com/landing/2016/39/}} Dataset ini merupakan himpunan citra dermoskopik yang digunakan untuk menyelesaikan permasalahan klasifikasi lesi kulit menjadi dua kategori, yaitu \textit{benign} (non-malignant) dan \textit{malignant}. Gambar~\ref{fig:contoh-data} menunjukkan contoh data yang ada pada Dataset, sementara Gambar~\ref{fig:contoh-benign} menunjukkan contoh citra berlabel \textit{benign} dan \textit{malignant}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[trim=0 5cm 0 3cm, clip, width=1\textwidth]{images/contoh-data.pdf}
+  \caption{Contoh citra yang ada pada Dataset ISIC 2016 Task 3.}
+  \label{fig:contoh-data}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[trim=0 5cm 0 3cm, clip, width=1\textwidth]{images/contoh-benign.pdf}
+  \caption{Contoh citra \textit{benign} dan \textit{malignant}.}
+  \label{fig:contoh-benign}
+\end{figure}
+
+Dataset pelatihan terdiri atas 900 citra lesi kulit dalam format JPEG dengan resolusi bervariasi. Setiap citra dinamai menggunakan pola \texttt{ISIC\_<image\_id>.jpg} dengan tujuh digit pengenal unik. Berkas pelatihan dilengkapi dengan \textit{Training Ground Truth} berupa sebuah berkas CSV yang memuat dua kolom: (1) \texttt{image\_id} yang sesuai dengan nama berkas citra, dan (2) label diagnosis definitif (\textit{benign} atau \textit{malignant}) yang ditentukan berdasarkan konsensus pakar serta laporan patologi.
+
+Selain itu, disediakan pula seperangkat \textit{Test Data} yang terdiri dari 379 citra dengan format yang sama. Berbeda dengan data pelatihan, data uji tidak disertai label kebenaran untuk menjaga objektivitas evaluasi. Pada proses kompetisi aslinya, peserta diminta mengunggah hasil prediksi dalam format CSV dua kolom berisi \texttt{image\_id} dan skor probabilistik dalam rentang [0.0, 1.0], dengan nilai di atas 0.5 mengindikasikan prediksi \textit{malignant} \cite{isic_committee_isic_2016}.
+
+Dapat dilihat pada Gambar~\ref{fig:contoh-data} terdapat beberapa jenis \textit{noice} yang dapat diidentifikasi, yaitu \textit{border noice}, \textit{hair noice}, dan \textit{object noice}.
+
+\subsection{\textit{Pre-processing}}
+Setelah mendapatkan Dataset, dilakukan \textit{pre-processing} atau pra-pemrosesan untuk menghilangkan sebagian noice. Gambar~\ref{fig:preprocessing} menunjukkan langkah-langkah pra-pemrosesan yang dilakukan.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=15mm,
+      proc/.style={
+          rectangle,
+          draw,
+          rounded corners,
+          align=center,
+          minimum width=30mm,
+          minimum height=10mm,
+          text width=35mm,
+          fill=blue!20
+        },
+      io/.style={
+          trapezium,
+          trapezium left angle=75,
+          trapezium right angle=105,
+          draw,
+          align=center,
+          minimum width=25mm,
+          minimum height=8mm,
+          fill=orange!25
+        },
+      term-start/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=green!25
+        },
+      term-finish/.style={
+          circle,
+          draw,
+          align=center,
+          minimum size=10mm,
+          fill=red!25
+        },
+      arrow/.style={
+          -latex,
+          thick
+        }
+    ]
+
+    % Nodes
+    \node[term-start] (mulai) {Mulai};
+    \node[proc, right=of mulai] (hair) {Menghilangkan \textit{hair noice}};
+    \node[proc, right=of hair] (konversi) {Konversi ke format Grayscale};
+    \node[proc, below=of konversi] (salt) {Menambahkan \textit{salt and pepper noice}};
+    \node[proc, left=of salt] (filter) {Iterative median filtering};
+    \node[io, left=of filter] (hasil) {Hasil filtering};
+    \node[term-finish, below=of hasil] (selesai) {Selesai};
+
+    % Arrows
+    \draw[arrow] (mulai) -- (hair);
+    \draw[arrow] (hair) -- (konversi);
+    \draw[arrow] (konversi) -- (salt);
+    \draw[arrow] (salt) -- (filter);
+    \draw[arrow] (filter) -- (hasil);
+    \draw[arrow] (hasil) -- (selesai);
+
+  \end{tikzpicture}
+
+
+
+  \caption{Diagram alir pra-pemrosesan.}
+  \label{fig:preprocessing}
+\end{figure}
+
+Setiap tahap pra-pemrosesan memiliki tujuan spesifik untuk mempersiapkan citra sebelum dilakukan segmentasi dengan mengikuti alur dari penelitian \textcite{jaseema_yasmin_improved_2012}.
+
+\begin{enumerate}
+  \item \textbf{Menghilangkan \textit{hair noise}}: Pada citra dermoskopik, rambut yang menutupi lesi dapat mengganggu analisis dan segmentasi. Oleh karena itu, rambut dihilangkan menggunakan operasi morfologi \textit{black-hat} yang diikuti dengan \textit{inpainting} untuk menutupi area rambut dengan piksel sekitarnya, sehingga citra menjadi lebih bersih.
+
+  \item \textbf{Konversi ke format Grayscale}: Citra RGB dikonversi menjadi citra intensitas (grayscale) untuk menyederhanakan data dan mengurangi kompleksitas komputasi. Dengan ini, analisis selanjutnya hanya fokus pada intensitas piksel, sehingga pengaruh variasi warna yang tidak relevan dapat diminimalkan.
+
+  \item \textbf{Menambahkan \textit{salt and pepper noise}}: Tahap ini dilakukan untuk menyiapkan citra dalam kondisi yang memungkinkan pengujian ketahanan metode filter. Noise buatan ditambahkan pada citra grayscale agar metode \textit{iterative median filtering} dapat diuji efektivitasnya dalam menghilangkan noise dan mempertahankan tepi lesi.
+
+  \item \textbf{Iterative Median Filtering}: Citra yang telah diberi noise kemudian difilter menggunakan metode median secara iteratif. Filter median efektif untuk menghilangkan noise impulsif (\textit{salt and pepper}) tanpa merusak kontur objek penting. Proses iteratif memastikan noise tersisa dapat dihilangkan secara bertahap, sambil mempertahankan detail lesi.
+
+  \item \textbf{Hasil Filtering}: Tahap ini menghasilkan citra yang bersih dari noise, dengan kontur lesi tetap terjaga. Citra hasil ini siap digunakan untuk tahap segmentasi dan ekstraksi fitur selanjutnya.
+\end{enumerate}
+
+Gambar~\ref{fig:hasil-preprocessing} memperlihatkan contoh hasil tiap tahap filtering pada citra dermoskopik.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[trim=0 5cm 0 3cm, clip, width=1\textwidth]{images/hasil-filtering.pdf}
+  \caption{(1) Konversi ke Grayscale; (2) Menambahkan \textit{salt and pepper noice}; (3) Menerapkan \textit{Iterative median filtering}}
+  \label{fig:hasil-preprocessing}
+\end{figure}
+
 
 % \begin{figure}[H]
 %     \centering
@@ -155,6 +355,8 @@ Pengembangan sistem \textit{Computer-Aided Diagnosis (CAD)} untuk deteksi melano
 %     \caption{Banyaknya data tiap kelas.}
 %     \label{tab:rincianjumlahdata}
 % \end{table}
+
+
 
 \section{Hasil dan Pembahasan}
 
