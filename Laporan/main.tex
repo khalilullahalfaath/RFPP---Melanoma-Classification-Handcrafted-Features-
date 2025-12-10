@@ -330,7 +330,7 @@ Gambar~\ref{fig:hasil-preprocessing} memperlihatkan contoh hasil tiap tahap filt
 \begin{figure}[H]
   \centering
   \includegraphics[trim=0 5cm 0 3cm, clip, width=1\textwidth]{images/hasil-filtering.pdf}
-  \caption{(1) Konversi ke Grayscale; (2) Menambahkan \textit{salt and pepper noice}; (3) Menerapkan \textit{Iterative median filtering}}
+  \caption{Hasil pra-pemrosesan: (1) Konversi ke Grayscale; (2) Menambahkan \textit{salt and pepper noice}; (3) Menerapkan \textit{Iterative median filtering}}
   \label{fig:hasil-preprocessing}
 \end{figure}
 
@@ -841,8 +841,6 @@ Penggunaan 29 komponen PCA justru menghasilkan performa yang lebih rendah diband
   \item \textbf{Curse of Dimensionality:} Jumlah input 29 komponen relatif besar dibandingkan jumlah sampel latih yang terbatas, yang berpotensi menyulitkan SVM dalam menemukan \textit{hyperplane} optimal (overfitting terhadap noise).
 \end{enumerate}
 
-\paragraph{Diskusi Perbandingan dan Isu Ketimpangan Kelas}
-
 Perbandingan ringkas performa kedua skenario disajikan pada Tabel \ref{tab:perbandingan}.
 
 \begin{table}[h]
@@ -859,7 +857,7 @@ Perbandingan ringkas performa kedua skenario disajikan pada Tabel \ref{tab:perba
 
 Berdasarkan Tabel~\ref{tab:perbandingan}, secara umum, \textbf{Chi-square terbukti lebih efektif} dibanding PCA dalam kasus ini. Penggunaan subset fitur asli yang spesifik lebih mampu menangkap karakteristik lesi dibanding transformasi global PCA.
 
-Namun, kendala utama yang terlihat pada kedua skenario adalah rendahnya nilai \textit{Recall} dan \textit{Precision} pada kelas \textit{malignant}. Hal ini sangat dipengaruhi oleh \textbf{ketimpangan data (imbalanced dataset)} di mana jumlah sampel \textit{benign} (145) jauh mendominasi \textit{malignant} (35). Model cenderung bias ke kelas mayoritas, sehingga menghasilkan banyak False Negative pada kelas kanker. Untuk pengembangan selanjutnya, teknik penanganan data tidak seimbang seperti SMOTE (\textit{Synthetic Minority Over-sampling Technique}) atau \textit{class weighting} sangat disarankan untuk meningkatkan sensitivitas deteksi kanker.
+Namun, kendala utama yang terlihat pada kedua skenario adalah rendahnya nilai \textit{Recall} dan \textit{Precision} pada kelas \textit{malignant}. Hal ini sangat dipengaruhi oleh \textbf{ketimpangan data (imbalanced dataset)}. Model cenderung bias ke kelas mayoritas, sehingga menghasilkan banyak False Negative pada kelas kanker. Untuk pengembangan selanjutnya, teknik penanganan data tidak seimbang seperti SMOTE (\textit{Synthetic Minority Over-sampling Technique}) atau \textit{class weighting} sangat disarankan untuk meningkatkan sensitivitas deteksi kanker.
 
 Gambar~\ref{fig:confusion-matrix-seleksi} menampilkan hasil \textit{confusion matrix} kedua seleksi fitur.
 \begin{figure}[H]
@@ -1044,8 +1042,10 @@ Berdasarkan Tabel~\ref{tab:perbandingan_skenario}, model SVM menunjukkan kinerja
 
 Selain itu, analisis \textit{feature importance} pada Random Forest memperlihatkan bahwa fitur-fitur geometris (\textit{solidity}) dan tekstur (\textit{hog\_var}) ternyata termasuk yang paling berkontribusi. Temuan ini menarik karena memperlihatkan bahwa informasi bentuk dan tekstur tetap penting, meskipun warna mendominasi pada SVM dengan seleksi Chi-square.
 
+Akan tetapi, jika dilihat berdasarkan nilai \textit{Recall}-nya, SVM dengan Chi-square menghasilkan nilai {Recall} terbaik, yaitu 0.46, dibandingkan dengan Random Forest yang hanya sebesar 0.29 yang mana nilai Recall merupakan nilai yang paling penting untuk kasus medis.
+
 \subsubsection{Dampak Ketidakseimbangan Kelas}
-Isu paling kritis pada seluruh eksperimen adalah rendahnya \textit{recall} kelas \textit{malignant}. Hal ini menunjukkan bahwa sebagian besar kasus melanoma gagal terdeteksi. Ketidakseimbangan jumlah sampel (\(145\) benign vs \(35\) malignant) membuat model cenderung bias ke kelas mayoritas. Upaya penanganan melalui SMOTE meningkatkan keseimbangan data latih, tetapi belum memberikan perbaikan signifikan pada performa, terutama untuk SVM.
+Isu paling kritis pada seluruh eksperimen adalah rendahnya \textit{recall} kelas \textit{malignant}. Hal ini menunjukkan bahwa sebagian besar kasus melanoma gagal terdeteksi. Ketidakseimbangan jumlah sampel membuat model cenderung bias ke kelas mayoritas. Upaya penanganan melalui SMOTE meningkatkan keseimbangan data latih, tetapi belum memberikan perbaikan signifikan pada performa, terutama untuk SVM.
 
 Fenomena ini umum terjadi pada data medis, di mana jumlah sampel kasus penyakit biasanya jauh lebih sedikit dibandingkan sampel normal. Dengan demikian, pendekatan lain seperti \textit{class weighting}, \textit{focal loss}, atau metode augmentasi spesifik citra lesi mungkin diperlukan untuk memperoleh performa yang lebih baik.
 
@@ -1088,7 +1088,15 @@ Secara keseluruhan, hasil studi menunjukkan pentingnya strategi seleksi fitur, t
 
 \section{Kesimpulan}
 
-Berdasarkan hasil dan analisis yang telah dilakukan, dapat disimpulkan bahwa:
+Penelitian ini menunjukkan bahwa pendekatan ekstraksi fitur berbasis ABCD (Asimetri, Border, Color, Diameter) yang dikombinasikan dengan fitur tekstur (GLCM, LBP) serta histogram warna HSV mampu menghasilkan representasi yang informatif untuk tugas klasifikasi melanoma pada dataset ISIC 2016. Setelah proses ekstraksi fitur, dua metode seleksi fitur, Chi-square dan PCA, digunakan untuk mereduksi dimensi dan mengevaluasi pengaruhnya terhadap performa model.
+
+Berdasarkan seluruh eksperimen yang dilakukan, model dengan performa keseluruhan terbaik diperoleh pada skenario \textit{Random Forest} menggunakan seluruh 65 fitur dengan penerapan SMOTE, yang mencapai akurasi sebesar 0.7889 dan f1-score kelas \textit{malignant} sebesar 0.34. Meskipun demikian, jika dilihat dari nilai \textit{Recall}, SVM dengan seleksi fitur Chi-square memberikan kinerja terbaik dengan nilai \textit{Recall} sebesar 0.46, lebih tinggi dibandingkan dengan Random Forest yang hanya mencapai 0.29. Hal ini penting karena metrik \textit{Recall} memiliki peran krusial dalam konteks medis, khususnya untuk mendeteksi melanoma secara sensitif agar mengurangi risiko kasus berbahaya yang terlewat.
+
+Metode Chi-square berhasil memilih fitur yang paling relevan, tetapi jumlah fitur yang terlalu sedikit menyebabkan hilangnya sebagian informasi pendukung klasifikasi. PCA mampu mempertahankan 95\% keragaman data, tetapi transformasi linier yang dihasilkan tidak sepenuhnya sejalan dengan struktur diskriminatif yang dibutuhkan oleh model SVM maupun Random Forest.
+
+Secara keseluruhan, beberapa poin utama dapat disimpulkan. Pertama, kombinasi fitur ABCD, tekstur, dan histogram warna memberikan fondasi representasi yang kuat untuk klasifikasi melanoma. Kedua, reduksi dimensi berhasil meningkatkan nilai \textit{Recall}, meskipun memiliki akurasi yang lebih rendah, dibandingkan dengan yang menggunakan seluruh fitur.
+
+Temuan ini membuka peluang untuk pengembangan lanjutan menggunakan pendekatan seperti \textit{deep feature extraction}, \textit{transfer learning}, atau teknik augmentasi data yang lebih bervariasi untuk meningkatkan kemampuan model dalam mendeteksi melanoma secara lebih akurat pada masa mendatang.
 
 Kode tersedia pada \textit{repository} GitHub \url{https://github.com/khalilullahalfaath/RFPP---Melanoma-Classification-Handcrafted-Features-}.
 
